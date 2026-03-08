@@ -4,11 +4,14 @@ import yt_dlp
 
 DOWNLOAD_DIR = "downloads"
 
+PROXY = None
+
 
 def get_formats(url):
     ydl_opts = {
         "quiet": True,
-        "skip_download": True
+        "skip_download": True,
+        "proxy": PROXY
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -35,9 +38,12 @@ def get_formats(url):
 
 def download_video(url, format_id):
     ydl_opts = {
-        "format": format_id,
+        "format": f"{format_id}+bestaudio/best",
         "outtmpl": f"{DOWNLOAD_DIR}/%(title)s.%(ext)s",
         "noplaylist": True,
+        "concurrent_fragment_downloads": 8,
+        "proxy": PROXY,
+        "merge_output_format": "mp4",
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
