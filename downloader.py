@@ -7,6 +7,18 @@ DOWNLOAD_DIR = "downloads"
 PROXY = None
 
 
+def format_size(size):
+    if not size:
+        return "unknown"
+
+    average_statistical_error = 0.03  # 3%
+
+    pure_mb = size / (1024 * 1024)
+    mb = pure_mb + pure_mb * average_statistical_error
+
+    return f"~{mb:.0f}mb"
+
+
 def get_formats(url):
     ydl_opts = {
         "quiet": True,
@@ -17,33 +29,59 @@ def get_formats(url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
-    formats = []
+    formats = info["formats"]
 
-    for f in info["formats"]:
+    videos = []
+    best_audio_size = 0
+
+    for f in formats:
+        if f.get("acodec") != "none" and f.get("vcodec") == "none":
+            size = f.get("filesize") or f.get("filesize_approx") or 0
+            if size > best_audio_size:
+                best_audio_size = size
+
+    for f in formats:
         if f.get("height") and f.get("vcodec") != "none":
-            formats.append({
+            video_size = f.get("filesize") or f.get("filesize_approx") or 0
+            total_size = video_size + best_audio_size
+            videos.append({
                 "id": f["format_id"],
                 "height": f["height"],
-                "ext": f["ext"]
+                "size": total_size
             })
 
     unique = {}
-    for f in formats:
-        unique[f["height"]] = f
+    for v in videos:
+        unique[v["height"]] = v
 
-    sorted_formats = sorted(unique.values(), key=lambda x: x["height"])
+    videos = sorted(unique.values(), key=lambda x: x["height"])
 
-    return sorted_formats
+    return videos
 
 
-def download_video(url, format_id):
+def download(url, format_id):
     ydl_opts = {
         "format": f"{format_id}+bestaudio/best",
         "outtmpl": f"{DOWNLOAD_DIR}/%(title)s.%(ext)s",
-        "noplaylist": True,
-        "concurrent_fragment_downloads": 8,
+
+        "merge_output_format": "mkv",
+
+        "concurrent_fragment_downloads": 6,
+
+        "writesubtitles": True,
+        "writeautomaticsub": False,
+        "embedsubtitles": True,
+        "convert_subtitles": "srt",
+
+        "keepvideo": False,
+
+        "ignoreerrors": True,
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0"
+        },
+
         "proxy": PROXY,
-        "merge_output_format": "mp4",
+        "noplaylist": True
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -61,7 +99,8 @@ def main():
     print("\nAvailable formats:")
 
     for i, f in enumerate(formats):
-        print(f"{i + 1}. {f['height']}p ({f['ext']})")
+        size = format_size(f["size"])
+        print(f"{i + 1}. {f['height']}p (mkv, {size})")
 
     choice = int(input("\nSelect a number: ")) - 1
 
@@ -69,7 +108,7 @@ def main():
 
     print(f"\nDownloading {selected['height']}p...\n")
 
-    download_video(url, selected["id"])
+    download(url, selected["id"])
 
     print("\nDone! The video is in the \"downloads\" folder..")
 
