@@ -5,6 +5,7 @@ import yt_dlp
 DOWNLOAD_DIR = "downloads"
 
 PROXY = None
+CONCURRENT_FRAGMENT_DOWNLOADS  =6
 
 
 def format_size(size):
@@ -66,7 +67,7 @@ def download(url, format_id):
 
         "merge_output_format": "mkv",
 
-        "concurrent_fragment_downloads": 6,
+        "concurrent_fragment_downloads": CONCURRENT_FRAGMENT_DOWNLOADS,
 
         "writesubtitles": True,
         "writeautomaticsub": False,
