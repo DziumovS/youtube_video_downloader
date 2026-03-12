@@ -1,29 +1,26 @@
 # 🎬 YouTube Video Downloader
 
-A simple CLI application for downloading **YouTube videos in MKV
-format** with the best available audio and embedded subtitles.
+A simple CLI application for downloading **YouTube videos in MKV format** with the **best available audio**.
 
-The program displays available video resolutions, estimates the final
-file size, and downloads the selected format.
+The program displays available video resolutions, estimates the final file size, and downloads the selected format.
 
 ------------------------------------------------------------------------
 
 # ✨ Features
 
--   📺 Download YouTube videos in multiple resolutions
--   🔊 Automatically merges **best audio + selected video**
--   📝 Downloads and **embeds subtitles** into the final video file
--   📦 Outputs a single **MKV file**
--   📊 Shows **approximate final file size** before downloading
--   ⚡ Parallel fragment downloads for faster downloading
--   🧠 Automatically selects the **best available audio stream**
--   🧩 Built on top of the powerful `yt-dlp`
+- 📺 Download YouTube videos in multiple resolutions
+- 🔊 Automatically merges **best audio + selected video**
+- 📦 Outputs a single **MKV file**
+- 📊 Shows **approximate final file size** before downloading
+- ⚡ Parallel fragment downloads for faster downloading
+- 🧠 Automatically selects the **best available audio stream**
+- 🧩 Built on top of the powerful `yt-dlp`
 
 ------------------------------------------------------------------------
 
 # 📷 Example
 
-``` text
+```text
 Paste the link to the YouTube video: https://www.youtube.com/watch?v=example
 
 Available formats:
@@ -45,27 +42,28 @@ Done! The video is in the "downloads" folder.
 
 # 🏗 Project Structure
 
-    youtube_video_downloader/
-    │
-    ├── downloader.py
-    ├── pyproject.toml
-    ├── README.md
-    └── downloads/
-
--   **downloader.py** --- main application script\
--   **downloads/** --- directory where downloaded videos are saved\
--   **pyproject.toml** --- project metadata and dependencies
+```
+youtube_video_downloader/
+│
+├── downloads/             # Directory where downloaded videos are saved
+├── src/
+│   ├── __init__.py        # Exports main downloader functions and models
+│   ├── downloader.py      # Core logic for format extraction and downloading
+│   └── models.py          # TypedDict for video formats
+├── tests/                 # Unit and E2E tests
+├── app.py                 # CLI entry point
+├── pyproject.toml         # Project metadata and dependencies
+├── pytest.ini             # Pytest configuration
+└── README.md              # README
+```
 
 ------------------------------------------------------------------------
 
 # ⚙️ Requirements
 
--   Python **3.14+**
--   `ffmpeg`
--   `uv`
-
-`ffmpeg` is required for merging video/audio streams and embedding
-subtitles.
+- Python **3.14+**
+- `ffmpeg` (for merging video/audio streams)
+- `uv` (CLI tool to run the app)
 
 ------------------------------------------------------------------------
 
@@ -73,15 +71,13 @@ subtitles.
 
 ## 1. Install uv
 
-If you don't have it:
-
-``` bash
+```bash
 pip install uv
 ```
 
 or (macOS):
 
-``` bash
+```bash
 brew install uv
 ```
 
@@ -89,7 +85,7 @@ brew install uv
 
 ## 2. Clone the repository
 
-``` bash
+```bash
 git clone https://github.com/yourusername/youtube-video-downloader.git
 cd youtube-video-downloader
 ```
@@ -98,14 +94,14 @@ cd youtube-video-downloader
 
 ## 3. Install dependencies
 
-``` bash
+```bash
 uv sync
 ```
 
 This installs the required packages listed in **pyproject.toml**:
 
--   `yt-dlp`
--   `curl-cffi`
+- `yt-dlp`
+- `curl-cffi`
 
 ------------------------------------------------------------------------
 
@@ -113,19 +109,21 @@ This installs the required packages listed in **pyproject.toml**:
 
 Run the downloader:
 
-``` bash
-uv run downloader.py
+```bash
+uv run app.py
 ```
 
 Then:
 
-1.  Paste the YouTube video URL
-2.  Select the desired resolution
-3.  Wait for the download to complete
+1. Paste the YouTube video URL
+2. Select the desired resolution
+3. Wait for the download to complete
 
 Downloaded files will appear in:
 
-    downloads/
+```
+downloads/
+```
 
 ------------------------------------------------------------------------
 
@@ -133,176 +131,108 @@ Downloaded files will appear in:
 
 ## yt-dlp
 
-Core engine used to extract and download media from YouTube.
-
-Provides:
-
--   format extraction
--   DASH stream downloading
--   subtitle downloading
--   stream merging
--   metadata processing
-
-Project:\
-https://github.com/yt-dlp/yt-dlp
-
-------------------------------------------------------------------------
+- Core engine used to extract and download media from YouTube
+- Provides format extraction, DASH stream downloading, stream merging, metadata processing
+- Project: https://github.com/yt-dlp/yt-dlp
 
 ## curl-cffi
 
-Used by `yt-dlp` for improved networking and browser-like TLS
-impersonation.
-
-This helps reduce issues such as:
-
--   HTTP 429 (Too Many Requests)
--   YouTube rate limiting
+- Used by `yt-dlp` for improved networking and TLS impersonation
+- Reduces issues like HTTP 429 and YouTube rate limiting
 
 ------------------------------------------------------------------------
 
 # 🧠 How It Works
 
-The downloader performs the following steps.
+1. **Extract video information**
 
-------------------------------------------------------------------------
+   Retrieves all formats without downloading:
 
-## 1. Extract video information
+   ```python
+   info = ydl.extract_info(url, download=False)
+   ```
 
-The program first retrieves metadata from YouTube without downloading
-the video:
+2. **Detect best audio stream**
 
-``` python
-info = ydl.extract_info(url, download=False)
-```
+   The script finds the largest audio-only stream:
 
-This returns information about all available formats.
+   ```python
+   acodec != none
+   vcodec == none
+   ```
 
-------------------------------------------------------------------------
+   This audio track will be merged with the selected video stream.
 
-## 2. Detect best audio stream
+3. **Build available resolution list**
 
-The script finds the largest **audio-only stream**:
+   Video formats are filtered by:
 
-    acodec != none
-    vcodec == none
+   ```python
+   vcodec != none
+   height is present
+   ```
 
-This audio track will be merged with the selected video stream.
+   Only unique heights are kept. Best audio is automatically paired.
 
-------------------------------------------------------------------------
+4. **Estimate final file size**
 
-## 3. Build available resolution list
+   Final size = video size + best audio size + 3% statistical margin
 
-Video formats are filtered by:
+5. **Download and merge streams**
 
-    vcodec != none
-    height is present
+   `yt-dlp` downloads video and audio separately, merges them into MKV:
 
-Duplicate resolutions are removed so each resolution appears once.
+   ```text
+   video stream + audio stream → final MKV file
+   ```
 
-------------------------------------------------------------------------
+6. **Subtitles**
 
-## 4. Estimate final file size
-
-The estimated file size is calculated as:
-
-    video_size + best_audio_size
-
-A **3% statistical margin** is added to account for:
-
--   container overhead
--   subtitle streams
--   metadata
-
-------------------------------------------------------------------------
-
-## 5. Download and merge streams
-
-YouTube provides video and audio as separate streams.
-
-`yt-dlp` downloads them individually and merges them with **ffmpeg**:
-
-    video stream
-       +
-    audio stream
-       +
-    subtitles
-       ↓
-    final MKV file
-
-------------------------------------------------------------------------
-
-## 6. Subtitle handling
-
-The downloader:
-
--   downloads available subtitles
--   converts them to `.srt`
--   embeds them into the final MKV container
-
-This allows switching subtitles inside the video player.
+   Subtitles are **not downloaded** in this version.
 
 ------------------------------------------------------------------------
 
 # 📂 Output Format
 
-All videos are saved as:
-
-    MKV (Matroska)
-
-This container supports:
-
--   multiple audio tracks
--   multiple subtitle tracks
--   high compatibility with modern media players
-
-Recommended players:
-
--   VLC
--   MPV
--   IINA
--   MPC-HC
+- All videos are saved as **MKV (Matroska)**
+- Recommended players:
+  - VLC
+  - MPV
+  - IINA
+  - MPC-HC
 
 ------------------------------------------------------------------------
 
 # ⚡ Performance
 
-The downloader uses parallel fragment downloads:
-
-    concurrent_fragment_downloads
-
-This allows faster downloads when YouTube serves segmented streams.
+- Parallel fragment downloads configurable via `CONCURRENT_FRAGMENT_DOWNLOADS`
+- Ensures faster downloads when YouTube serves segmented streams
 
 ------------------------------------------------------------------------
 
 # 🔧 Configuration
 
-Inside `downloader.py` you can adjust several parameters.
-
 ### Proxy
 
-``` python
+```python
 PROXY = None
 ```
 
 Example:
 
-``` python
+```python
 PROXY = "http://127.0.0.1:8080"
 ```
 
-------------------------------------------------------------------------
-
 ### Download directory
 
-``` python
+```python
 DOWNLOAD_DIR = "downloads"
 ```
 
-------------------------------------------------------------------------
-
 ### Download concurrency
 
-``` python
+```python
 CONCURRENT_FRAGMENT_DOWNLOADS = 6
 ```
 
@@ -310,9 +240,9 @@ CONCURRENT_FRAGMENT_DOWNLOADS = 6
 
 # ⚠️ Notes
 
--   Displayed file size is **approximate** (±3-5%)
--   Some videos may not provide subtitles
--   YouTube may occasionally rate-limit requests
+- Displayed file size is **approximate** (±3%)
+- Subtitles are no longer downloaded
+- YouTube may occasionally rate-limit requests
 
 ------------------------------------------------------------------------
 
@@ -324,6 +254,5 @@ MIT License
 
 # 🙌 Acknowledgements
 
--   https://github.com/yt-dlp/yt-dlp
--   https://github.com/astral-sh/uv
--   YouTube DASH streaming system
+- https://github.com/yt-dlp/yt-dlp
+- https://github.com/astral-sh/uv
