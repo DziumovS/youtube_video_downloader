@@ -5,7 +5,7 @@ import yt_dlp
 DOWNLOAD_DIR = "downloads"
 
 PROXY = None
-CONCURRENT_FRAGMENT_DOWNLOADS  =6
+CONCURRENT_FRAGMENT_DOWNLOADS = 6
 
 
 def format_size(size):
