@@ -7,7 +7,13 @@ def test_format_size_none():
 def test_format_size_zero():
     assert format_size(0) == "unknown"
 
+def test_format_size_negative():
+    assert format_size(-100) == "unknown"
+
 def test_format_size_small():
     size_bytes = 1024 * 1024  # 1 MB
-    result = format_size(size_bytes)
-    assert result.startswith("~1")
+    assert format_size(size_bytes) == "~1 MB"
+
+
+def test_format_size_uses_decimal_megabytes_without_artificial_overhead():
+    assert format_size(946_670_904) == "~947 MB"
