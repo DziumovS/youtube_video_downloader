@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1e1e1e">
+  <title>YouTube Downloader</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="app">
+    <div class="light-cone" aria-hidden="true"></div>
+    <div class="warm-glow" aria-hidden="true"></div>
+
+    <header class="fixture-header">
+      <button
+        id="light-toggle"
+        class="fixture-toggle"
+        type="button"
+        aria-label="Turn off the light"
+        aria-pressed="true"
+        title="Turn the light on or off"
+      >
+        <svg
+          class="fixture-svg"
+          viewBox="0 0 140 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="fixtureMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#71717a"></stop>
+              <stop offset="45%" stop-color="#d4d4d8"></stop>
+              <stop offset="100%" stop-color="#52525b"></stop>
+            </linearGradient>
+            <linearGradient id="fixtureLens" x1="50%" y1="0%" x2="50%" y2="100%">
+              <stop offset="0%" stop-color="#fef9c3"></stop>
+              <stop offset="55%" stop-color="#fde047"></stop>
+              <stop offset="100%" stop-color="#ca8a04"></stop>
+            </linearGradient>
+            <radialGradient id="fixtureHot" cx="50%" cy="35%" r="55%">
+              <stop offset="0%" stop-color="#fffbeb" stop-opacity="0.95"></stop>
+              <stop offset="100%" stop-color="#fde047" stop-opacity="0"></stop>
+            </radialGradient>
+          </defs>
+          <rect x="64" y="0" width="12" height="14" rx="2" fill="url(#fixtureMetal)"></rect>
+          <path d="M58 14 L82 14 L88 26 L52 26 Z" fill="url(#fixtureMetal)"></path>
+          <ellipse cx="70" cy="30" rx="26" ry="8" fill="#3f3f46"></ellipse>
+          <ellipse class="fixture-lens" cx="70" cy="32" rx="22" ry="14" fill="url(#fixtureLens)"></ellipse>
+          <ellipse class="fixture-hot" cx="70" cy="30" rx="18" ry="10" fill="url(#fixtureHot)"></ellipse>
+          <ellipse cx="70" cy="34" rx="20" ry="11" stroke="rgba(255,255,255,0.35)" stroke-width="1"></ellipse>
+        </svg>
+      </button>
+    </header>
+
+    <main class="scene">
+      <div id="media-particles" class="media-layer" hidden aria-hidden="true"></div>
+
+      <section class="card" aria-label="YouTube download">
+        <form id="url-form" novalidate>
+          <label class="visually-hidden" for="youtube-url">Video link</label>
+          <input
+            id="youtube-url"
+            class="youtube-input"
+            name="url"
+            type="url"
+            inputmode="url"
+            autocomplete="url"
+            spellcheck="false"
+            placeholder="paste a YouTube link here"
+            required
+          >
+          <button id="inspect-button" class="action-btn" type="submit" disabled>
+            Download
+          </button>
+        </form>
+
+        <section id="mode-panel" class="flow-panel" hidden aria-labelledby="mode-title">
+          <h1 id="mode-title">What would you like to download?</h1>
+          <div class="mode-grid">
+            <button id="video-mode" class="choice-btn" type="button">
+              <span aria-hidden="true">▶</span>
+              Download video
+            </button>
+            <button id="audio-mode" class="choice-btn" type="button">
+              <span aria-hidden="true">♪</span>
+              Download audio
+            </button>
+          </div>
+        </section>
+
+        <section id="formats-panel" class="flow-panel" hidden aria-labelledby="formats-title">
+          <fieldset>
+            <legend id="formats-title">Select video quality</legend>
+            <div id="formats-list" class="formats-grid"></div>
+          </fieldset>
+          <button id="download-video" class="action-btn" type="button" disabled>
+            Download
+          </button>
+        </section>
+
+        <div id="status" class="message status" role="status" aria-live="polite" hidden>
+          <span id="spinner" class="spinner" aria-hidden="true"></span>
+          <span id="status-text"></span>
+        </div>
+        <div id="error" class="message error" role="alert" hidden></div>
+        <div id="download-notice" class="message notice" role="status" hidden>
+          <span>Your download has started. If the browser blocked it, <a id="download-again" href="#">click here</a>.</span>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>
